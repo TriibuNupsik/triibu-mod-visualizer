@@ -11,7 +11,8 @@ container.appendChild(renderer.domElement);
 
 // Orbit Controls
 const controls = new OrbitControls(camera, renderer.domElement);
-camera.position.set(0, 10, 0);
+camera.position.set(0, 110, 20);
+controls.target.set(0, 80, 0);
 controls.update();
 
 // Lighting
@@ -165,35 +166,73 @@ async function loadSlab(xStart, yStart, zStart, xEnd, yEnd, zEnd) {
   });
 
   blocks.forEach(({ x, y, z, blockType }) => {
-    if (blockType && blockType !== 'minecraft:air') {
+    if (blockType && blockType !== 'minecraft:air' && blockType !== 'minecraft:grass') {
       setBlock(x, y, z, blockType);
     }
   });
 
   blocks.forEach(({ x, y, z, blockType }) => {
-    if (blockType && blockType !== 'minecraft:air') {
+    if (blockType && blockType !== 'minecraft:air' && blockType !== 'minecraft:grass') {
       addVisibleBlockFaces(x, y, z, blockType);
     }
   });
 }
 
-// Dynamically load chunks within a range
-function loadVisibleChunks(camera) {
-  const range = 8;
+// Modified loadVisibleChunks to use input
+function loadVisibleChunks(x = 0, z = 0, yStart = 60, yEnd = 120, renderDistance = 16) {
   const chunkSize = 16;
-  const camPos = camera.position;
 
-  const startX = Math.floor(camPos.x / chunkSize) * chunkSize - range;
-  const startZ = Math.floor(camPos.z / chunkSize) * chunkSize - range;
-  const endX = startX + 2 * range;
-  const endZ = startZ + 2 * range;
+  // Calculate the min/max world coordinates to cover a (renderDistance*2)x(renderDistance*2) area centered on x,z
+  const minX = x - renderDistance;
+  const maxX = x + renderDistance - 1;
+  const minZ = z - renderDistance;
+  const maxZ = z + renderDistance - 1;
 
-  for (let x = startX; x < endX; x += chunkSize) {
-    for (let z = startZ; z < endZ; z += chunkSize) {
-      loadSlab(x, -64, z, x + chunkSize, 100, z + chunkSize);
+  // Find the chunk range that covers the block range
+  const startChunkX = Math.floor(minX / chunkSize);
+  const endChunkX = Math.floor(maxX / chunkSize);
+  const startChunkZ = Math.floor(minZ / chunkSize);
+  const endChunkZ = Math.floor(maxZ / chunkSize);
+
+  for (let chunkX = startChunkX; chunkX <= endChunkX; chunkX++) {
+    for (let chunkZ = startChunkZ; chunkZ <= endChunkZ; chunkZ++) {
+      const worldX = chunkX * chunkSize+1;
+      const worldZ = chunkZ * chunkSize+1;
+      loadSlab(worldX, yStart, worldZ, worldX + chunkSize+1, yEnd, worldZ + chunkSize+1);
     }
   }
 }
+
+// Add event listener for the button
+document.getElementById('loadBtn').addEventListener('click', () => {
+  // Clear all block meshes from the scene
+  for (let i = scene.children.length - 1; i >= 0; i--) {
+    const obj = scene.children[i];
+    if (obj.isMesh) {
+      scene.remove(obj);
+    }
+  }
+  // Clear worldData
+  for (const key in worldData) {
+    delete worldData[key];
+  }
+
+  const x = parseInt(document.getElementById('posX').value, 10);
+  const z = parseInt(document.getElementById('posZ').value, 10);
+  const yStartInput = document.getElementById('posYStart');
+  const yEndInput = document.getElementById('posYEnd');
+  const renderDistanceInput = document.getElementById('renderDistance');
+  const yStart = yStartInput ? parseInt(yStartInput.value, 10) : 60;
+  const yEnd = yEndInput ? parseInt(yEndInput.value, 10) : 120;
+  const renderDistance = renderDistanceInput ? parseInt(renderDistanceInput.value, 10) : 16;
+  loadVisibleChunks(
+    x,
+    z,
+    isNaN(yStart) ? 60 : yStart,
+    isNaN(yEnd) ? 120 : yEnd,
+    isNaN(renderDistance) ? 16 : renderDistance
+  );
+});
 
 // Render loop
 function animate() {
@@ -202,5 +241,5 @@ function animate() {
   renderer.render(scene, camera);
 }
 
-loadVisibleChunks(camera); // Load initial chunks
+loadVisibleChunks(0,0,60,120,16); // Load initial chunks
 animate();

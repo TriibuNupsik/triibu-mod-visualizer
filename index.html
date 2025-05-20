@@ -9,9 +9,27 @@
     "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.171.0/examples/jsm/" 
     } } 
   </script>
+  <script type="module" src="app.js"></script>
+  <style>
+    label {
+      color: #FFFFFF;
+    }
+  </style>
 </head>
 <body style="padding: 0;margin: 0;">
+  <div style="position:absolute;top:10px;left:10px;z-index:10;">
+    <label for="posX">X:</label>
+    <input id="posX" name="posX" type="number" value="0" style="width:60px;">
+    <label for="posZ">Z:</label>
+    <input id="posZ" name="posZ" type="number" value="0" style="width:60px;">
+    <label for="posYStart">Y Start:</label>
+    <input id="posYStart" name="posYStart" type="number" value="60" style="width:60px;">
+    <label for="posYEnd">Y End:</label>
+    <input id="posYEnd" name="posYEnd" type="number" value="120" style="width:60px;">
+    <label for="renderDistance">Render Distance:</label>
+    <input id="renderDistance" name="renderDistance" type="number" value="16" style="width:60px;">
+    <button id="loadBtn">Load Chunks</button>
+  </div>
   <div id="container"></div>
-  <script type="module" src="app.js"></script>
 </body>
 </html>
